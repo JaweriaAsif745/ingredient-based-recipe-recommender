@@ -112,7 +112,7 @@ Once models are generated, start the Flask app:
 
 ```bash
 cd app
-python app.py
+python model.py
 ```
 
 Then open your browser at:
