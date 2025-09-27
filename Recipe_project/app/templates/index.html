@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Recommendation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Custom styling for list items and steps */
+        ul {
+            list-style-type: disc; /* Adds bullet points */
+            padding-left: 20px;    /* Indentation for bullets */
+        }
+    </style>
+</head>
+<body>
+    <h1 class="text-center" style="margin-top:60px;">Recipe Recommendation System</h1>
+
+    <div class="container">
+        <div class="ingredient">
+            <label for="ingredients" class="form-label"><h2>Enter your ingredients (comma-separated):</h2></label><br>
+            <input type="text" id="ingredients" class="form-control" placeholder="e.g., tomato, cheese, onion" required><br><br>
+            <button class="btn" onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+        <div class="mt-5">
+            <h2>Recommended Recipes</h2>
+            <ul id="recommendations" class="list-group"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function getRecommendations() {
+            const ingredientsInput = document.getElementById('ingredients').value;
+            const ingredients = ingredientsInput.split(',').map(item => item.trim());
+
+            // Check if input is empty
+            if (!ingredientsInput) {
+                alert('Please enter at least one ingredient.');
+                return; // Stop the function execution
+            }
+
+            const response = await fetch('/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ingredients })
+            });
+            const recommendations = await response.json();
+            const recommendationsList = document.getElementById('recommendations');
+            recommendationsList.innerHTML = '';
+
+            // List of downloaded videos
+            const videoFiles = [
+                "/static/videos/recipe1.mp4",
+                "/static/videos/recipe2.mp4",
+            ];
+
+            recommendations.forEach((recipe, index) => {
+                // Add a divider before every recipe except the first
+                if (index > 0) {
+                    const divider = document.createElement('div');
+                    divider.style.height = '4px';
+                    divider.style.backgroundColor = '#000';
+                    divider.style.margin = '20px 0';
+                    recommendationsList.appendChild(divider);
+                }
+
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.innerHTML = `
+                    <h3>Recipe Name: ${recipe.name}</h3>
+                    <p><strong>Rating:</strong> ${recipe.rating || 'N/A'}</p>
+                    <p><strong>Time:</strong> ${recipe.minutes} minutes</p>
+                    <p><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
+                `;
+
+                // Create a list for steps (with bullet points)
+                const stepsList = document.createElement('ul'); // Unordered list for steps
+                recipe.steps.forEach(step => {
+                    const stepItem = document.createElement('li');
+                    stepItem.textContent = step;
+                    stepsList.appendChild(stepItem);
+                });
+
+                // Append steps to the list item
+                const stepsHeader = document.createElement('p');
+                stepsHeader.innerHTML = "<strong>Steps:</strong>";
+                listItem.appendChild(stepsHeader);
+                listItem.appendChild(stepsList);
+
+                // Add review and sentiment
+                const reviewAndSentiment = `
+                    <p><strong>Review:</strong> ${recipe.review}</p>
+                    <p><strong>Sentiment:</strong> ${recipe.sentiment_label}</p>
+                `;
+                listItem.innerHTML += reviewAndSentiment;
+
+                // Randomly select a video from the list
+                const randomVideo = videoFiles[Math.floor(Math.random() * videoFiles.length)];
+                const videoElement = document.createElement('video');
+                videoElement.controls = true;
+                videoElement.width = 600; // Adjust the width
+                videoElement.style.marginLeft = "16%";
+                videoElement.innerHTML = `
+                    <source src="${randomVideo}" type="video/mp4">
+                    Your browser does not support the video tag.
+                `;
+                listItem.appendChild(videoElement);
+
+                recommendationsList.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
